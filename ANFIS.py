@@ -99,7 +99,7 @@ class ANFIS:
 
         return result.T
 
-    def show_results(self, color=None):
+    def show_results(self, color=None, title=""):
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
@@ -111,6 +111,7 @@ class ANFIS:
 
         # ax.scatter(np.array(self.training_data)[:,0], np.array(self.training_data)[:,1], result, c=rgb)
         ax.scatter(self.training_data[0], self.training_data[1], result, c=color)
+        ax.set_title(title)
 
         plt.show()
 
@@ -176,9 +177,6 @@ class ANFIS:
             self.end_x2 = len(x1)
 
             bounds = bfv + btsk
-            print(f'{x0=}')
-            print(f'{x0.shape=}')
-            print(f'{bounds=}')
 
             if global_optimization:
                 minimizer_kwargs = {"method": "SLSQP", "bounds": bounds, "args": (self)}
@@ -187,9 +185,6 @@ class ANFIS:
             else:
                 res = minimize(goal_premises_consequents, x0, method='SLSQP', bounds=bounds, args=self, tol=1e-6)
 
-            print(f'{x0=}')
-            print(f'{x0.shape=}')
-            print(f'{len(x0)=}')
             self.set_premises_parameters(res.x[:self.end_x1])  ##zmiana funkcji
             self.tsk = res.x[self.end_x2:].reshape(np.shape(self.tsk))
 
