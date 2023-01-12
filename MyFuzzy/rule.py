@@ -1,25 +1,28 @@
-from typing import Callable, Optional
+import numpy as np
 
 
-# clas for rule in fuzzy systems
 class Rule:
-    """
+    _OPERATIONS = {'and': lambda x: np.min(x), 'or': lambda x: np.max(x)}
 
+    def __init__(self, antecedents: list, operations: list[str], consequent: int):
+        for op in operations:
+            if op not in self._OPERATIONS.keys():
+                raise ValueError(f"Operator {op} is not supported")
 
-    """
-
-    _OPERATIONS = {'and': lambda x, y: min(x, y), 'or': lambda x, y: max(x, y)}
-
-    def __init__(self, first: Callable, operation: Optional[str], second: Optional[Callable], consequent: Callable):
-        if operation is not None:
-            assert operation in ['and', 'or']
-            assert second is not None
-
-        self.first = first
-        self.operation = operation
-        self.second = second
+        self.antecedents = antecedents
+        self.operations = operations
         self.consequent = consequent
 
-    def __call__(self, *args, **kwargs):
-        return self.consequent(self.first(*args, **kwargs) if self.operation is None else
-                               self._OPERATIONS[self.operation](self.first(*args, **kwargs), self.second(*args, **kwargs)))
+    def __call__(self, args: dict):
+        if not len(self.operations):
+            return 0
+
+        ant_vals = []
+        try:
+            for ant in self.antecedents:
+                ant_vals.append(ant[1](args[ant[0]]))
+        except KeyError:
+            raise KeyError(f'Missing value for antecedent {ant[0]}')
+
+        oped_vals = [self._OPERATIONS[op](ant_vals) for op in self.operations]
+        return np.average(oped_vals)

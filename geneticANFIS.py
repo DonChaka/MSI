@@ -120,7 +120,7 @@ class ANFIS:
         self.expected_labels = expected_labels
 
     def train(self, global_optimization: bool, learn_premises: bool, learn_operators: bool, learn_consequents: bool,
-              n_iter=100, bounds_premises=None, float_divisions=10000):
+              n_iter=100, n_units=500, bounds_premises=None):
 
         x1 = [item for sublist in self.premises for item in sublist]
         x1 = np.array(x1).flatten()
@@ -141,14 +141,12 @@ class ANFIS:
             self.end_x1 = len(x1)
             self.end_x2 = len(x1) + len(x2)
 
-            bounds = bfv + bop + btsk
-
             optimizer = GeneticEngine(
+                n_units=n_units,
                 cost_function=goal_premises_operators_consequents,
                 n_features=len(x0),
-                n_cut_points=4,
-                n_mutate_points=2,
-                float_divisions=float_divisions,
+                n_cut_points=6 * (len(x0)+1),
+                n_mutate_points=3 * (len(x0)+1),
                 cost_function_args=(self,)
             )
             optimizer.run(n_iter, verbose=False)
@@ -163,14 +161,16 @@ class ANFIS:
             self.end_x1 = len(x1)
             self.end_x2 = len(x1) + len(x2)
 
-            bounds = bfv + bop
-
-            if global_optimization:
-                minimizer_kwargs = {"method": "SLSQP", "bounds": bounds}
-                res = basinhopping(goal_premises_operators, x0, minimizer_kwargs=minimizer_kwargs, niter=n_iter,
-                                   niter_success=niter_success)
-            else:
-                res = minimize(goal_premises_operators, x0, method='SLSQP', bounds=bounds, args=self)
+            optimizer = GeneticEngine(
+                n_units=n_units,
+                cost_function=goal_premises_operators,
+                n_features=len(x0),
+                n_cut_points=6 * (len(x0) + 1),
+                n_mutate_points=3 * (len(x0) + 1),
+                cost_function_args=(self,)
+            )
+            optimizer.run(n_iter, verbose=True)
+            res, error = optimizer.get_best()
 
             self.set_premises_parameters(res.x[:self.end_x1].reshape(np.shape(self.premises)))
             self.op = res.x[self.end_x1:self.end_x2]
@@ -180,25 +180,16 @@ class ANFIS:
             self.end_x1 = len(x1)
             self.end_x2 = len(x1)
 
-            bounds = bfv + btsk
-
             optimizer = GeneticEngine(
+                n_units=n_units,
                 cost_function=goal_premises_consequents,
                 n_features=len(x0),
-                n_cut_points=4 * len(x0),
-                n_mutate_points=2 * len(x0),
-                float_divisions=float_divisions,
+                n_cut_points=6 * (len(x0)+1),
+                n_mutate_points=3 * (len(x0)+1),
                 cost_function_args=(self,)
             )
             optimizer.run(n_iter, verbose=True)
             res, error = optimizer.get_best()
-
-            # if global_optimization:
-            #     minimizer_kwargs = {"method": "SLSQP", "bounds": bounds, "args": (self)}
-            #     res = basinhopping(goal_premises_consequents, x0, minimizer_kwargs=minimizer_kwargs,
-            #                        niter=n_iter)  # , niter_success=niter_success)
-            # else:
-            #     res = minimize(goal_premises_consequents, x0, method='SLSQP', bounds=bounds, args=self, tol=1e-6)
 
             self.set_premises_parameters(res[:self.end_x1])  ##zmiana funkcji
             self.tsk = res[self.end_x2:].reshape(np.shape(self.tsk))
@@ -208,14 +199,16 @@ class ANFIS:
             self.end_x1 = 0
             self.end_x2 = len(x2)
 
-            bounds = bop + btsk
-
-            if global_optimization:
-                minimizer_kwargs = {"method": "SLSQP", "bounds": bounds}
-                res = basinhopping(goal_operators_consequents, x0, minimizer_kwargs=minimizer_kwargs, niter=n_iter,
-                                   niter_success=niter_success)
-            else:
-                res = minimize(goal_operators_consequents, x0, method='SLSQP', bounds=bounds, args=self)
+            optimizer = GeneticEngine(
+                n_units=n_units,
+                cost_function=goal_operators_consequents,
+                n_features=len(x0),
+                n_cut_points=6 * (len(x0) + 1),
+                n_mutate_points=3 * (len(x0) + 1),
+                cost_function_args=(self,)
+            )
+            optimizer.run(n_iter, verbose=True)
+            res, error = optimizer.get_best()
 
             self.op = res.x[self.end_x1:self.end_x2]
             self.tsk = res.x[self.end_x2:].reshape(np.shape(self.tsk))
@@ -225,14 +218,16 @@ class ANFIS:
             self.end_x1 = len(x1)
             self.end_x2 = len(x1)
 
-            bounds = bfv
-
-            if global_optimization:
-                minimizer_kwargs = {"method": "SLSQP", "bounds": bounds}
-                res = basinhopping(goal_premises, x0, minimizer_kwargs=minimizer_kwargs, niter=n_iter,
-                                   niter_success=niter_success)
-            else:
-                res = minimize(goal_premises, x0, method='SLSQP', bounds=bounds, args=self)
+            optimizer = GeneticEngine(
+                n_units=n_units,
+                cost_function=goal_premises,
+                n_features=len(x0),
+                n_cut_points=6 * (len(x0) + 1),
+                n_mutate_points=3 * (len(x0) + 1),
+                cost_function_args=(self,)
+            )
+            optimizer.run(n_iter, verbose=True)
+            res, error = optimizer.get_best()
 
             self.set_premises_parameters(res.x[:].reshape(np.shape(self.premises)))
 
@@ -241,14 +236,16 @@ class ANFIS:
             self.end_x1 = 0
             self.end_x2 = len(x2)
 
-            bounds = bop
-
-            if global_optimization:
-                minimizer_kwargs = {"method": "SLSQP", "bounds": bounds}
-                res = basinhopping(goal_operators, x0, minimizer_kwargs=minimizer_kwargs, niter=n_iter,
-                                   niter_success=niter_success)
-            else:
-                res = minimize(goal_operators, x0, method='SLSQP', bounds=bounds, args=self)
+            optimizer = GeneticEngine(
+                n_units=n_units,
+                cost_function=goal_operators,
+                n_features=len(x0),
+                n_cut_points=6 * (len(x0) + 1),
+                n_mutate_points=3 * (len(x0) + 1),
+                cost_function_args=(self,)
+            )
+            optimizer.run(n_iter, verbose=True)
+            res, error = optimizer.get_best()
 
             self.op = res.x[:]
 
@@ -257,14 +254,16 @@ class ANFIS:
             self.end_x1 = 0
             self.end_x2 = 0
 
-            bounds = btsk
-
-            if global_optimization:
-                minimizer_kwargs = {"method": "SLSQP", "bounds": bounds, "args": (self), "tol": 1e-03}
-                res = basinhopping(goal_consequents, x0, minimizer_kwargs=minimizer_kwargs, niter=n_iter,
-                                   niter_success=niter_success)
-            else:
-                res = minimize(goal_consequents, x0, method='SLSQP', bounds=bounds, args=self)
+            optimizer = GeneticEngine(
+                n_units=n_units,
+                cost_function=goal_consequents,
+                n_features=len(x0),
+                n_cut_points=6 * (len(x0) + 1),
+                n_mutate_points=3 * (len(x0) + 1),
+                cost_function_args=(self,)
+            )
+            optimizer.run(n_iter, verbose=True)
+            res, error = optimizer.get_best()
 
             self.tsk = res.x[:].reshape(np.shape(self.tsk))
 
