@@ -56,11 +56,12 @@ class LogicLayer(Module):
 
         self.idx = self.get_indexes()
 
-    def bin_forward(self, a: Tensor, b: Tensor, indices: Tensor) -> Tensor:
+    @staticmethod
+    def bin_forward(a: Tensor, b: Tensor, indices: Tensor) -> Tensor:
         res = torch.zeros_like(a)
 
         for i in range(16):
-            res += indices[:, i] * self.bin_op(a, b, i)
+            res += indices[:, i] * LogicLayer.bin_op(a, b, i)
 
         return res
 
@@ -72,13 +73,13 @@ class LogicLayer(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         if self.training:
-            return self.bin_forward(
+            return LogicLayer.bin_forward(
                 a=x[:, self.idx[0]],
                 b=x[:, self.idx[1]],
                 indices=softmax(self.weights, dim=-1)
             )
 
-        return self.bin_forward(
+        return LogicLayer.bin_forward(
             a=x[:, self.idx[0]],
             b=x[:, self.idx[1]],
             indices=one_hot(self.weights.argmax(-1), 16)

@@ -20,7 +20,7 @@ class LogicNetwork:
 
     def fit(self, epochs: int, train_loader: DataLoader, verbose: int = 0) -> None:
         train_state = self.model.training
-        self.model.training=True
+        self.model.training = True
 
         epoch_tqdm = tqdm(range(epochs), disable=(verbose != 1))
         for epoch in epoch_tqdm:
@@ -34,5 +34,9 @@ class LogicNetwork:
         self.model.training = train_state
 
     def __call__(self, x):
+        train_state = self.model.training
+        self.model.training = False
         with no_grad():
-            return self.model(x)
+            ret = self.model(x)
+        self.model.training = train_state
+        return ret

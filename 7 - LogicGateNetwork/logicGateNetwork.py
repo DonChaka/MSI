@@ -1,6 +1,6 @@
 import numpy as np
 from numpy import ndarray, logical_or, logical_and, logical_not, logical_xor
-from typing import Callable
+from typing import Callable, List
 
 BIN2GATE = {
     '00': lambda x: logical_and(*x.T).reshape(-1, 1),
@@ -53,7 +53,7 @@ class Layer:
 
 
 class LogicGateNetwork:
-    def __init__(self, layers: list[Layer]) -> None:
+    def __init__(self, layers: List[Layer]) -> None:
         self.layers = layers
 
     def forward(self, x: np.ndarray) -> np.ndarray:
